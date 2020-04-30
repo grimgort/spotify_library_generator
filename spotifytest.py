@@ -4,14 +4,12 @@ import argparse
 import logging
 import spotipy
 import time
+import argparse
 import spotipy.oauth2 as oauth
 from spotipy import util
 # To access authorised Spotify data
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.oauth2 import SpotifyOAuth
-client_id = "a74e9479f7164cbe94a85f1d0956e67f"
-client_secret = "6b80acbbef46465ea4aed39efc28b5ee"
-username = "grimgort"
 redirect_uri = 'http://localhost:9999'
 
 LOG_FILENAME = 'logging_rotatingfile_example.out'
@@ -22,12 +20,13 @@ logging.basicConfig(filename='spotilog.txt', level='INFO')
 
 class SpotifyInstance:
     def __init__(self):
+        self.add_argument()
         self.scope = 'user-follow-read playlist-modify-public playlist-modify-private'
-        self.spo = oauth.SpotifyOAuth(client_id=client_id,
-                                      client_secret=client_secret,
+        self.spo = oauth.SpotifyOAuth(client_id=self.client_id,
+                                      client_secret=self.client_secret,
                                       redirect_uri=redirect_uri,
                                       scope=self.scope,
-                                      cache_path=".cache-{}".format(username))
+                                      cache_path=".cache-{}".format(self.username))
 
         self.sp = spotipy.Spotify(auth=self.get_token())
         # self.playlist_id = "0RQmvqO5SVHbMJzPTY4efG"
@@ -35,6 +34,12 @@ class SpotifyInstance:
         self.number_track_in_playlist = 0
         self.playlist_id = self.create_playlist()
         return
+
+    def delete_all_playlist(self):
+        playlists = self.sp.user_playlists(self.username)
+        for playlist in playlists['items']:
+            print("fred",  playlist)
+            self.sp.user_playlist_unfollow(self.username, playlist['id'])
 
     def calcul_time_token(self):
         time = datetime.datetime.now() - self.initial_time
@@ -82,7 +87,7 @@ class SpotifyInstance:
     def create_playlist(self):
         date = datetime.datetime.now()
         playlist_name = "playlistDu" + str(date)
-        playlist = self.sp.user_playlist_create(username, playlist_name)
+        playlist = self.sp.user_playlist_create(self.username, playlist_name)
         return playlist['id']
 
     def get_artist(self, name):
@@ -241,7 +246,25 @@ class SpotifyInstance:
         # continue
         # return
 
+    def add_argument(self):
+        parser = argparse.ArgumentParser(description="give credential for spotify")
+        parser.add_argument('--client_id',required=True, help='give \
+                client id. see : https://developer.spotify.com/documentation/general/guides/app-settings/ ')
+
+        parser.add_argument('--client_secret',required=True, help='give \
+                client id. see : https://developer.spotify.com/documentation/general/guides/app-settings/ ')
+
+        parser.add_argument('--username',required=True, help='give your \
+        spotify username' )
+
+        args = parser.parse_args()
+        # print(args.client_id)
+        self.client_id = args.client_id
+        self.client_secret = args.client_secret
+        self.username= args.username
+
 if __name__ == '__main__':
     spotifyInstance = SpotifyInstance()
-    spotifyInstance.add_library_playlist()
+    spotifyInstance.delete_all_playlist()
+    # spotifyInstance.add_library_playlist()
     # main()
