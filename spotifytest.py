@@ -175,7 +175,8 @@ class SpotifyInstance:
         tracks.extend(results['items'])
         while results['next']:
             results = self.sp.next(results)
-            tracks.extend(results['items'])
+            if results['items'] != None:
+                tracks.extend(results['items'])
         for i, track in enumerate(tracks):
             logger.info('%s. %s', i + 1, track['name'])
         return tracks
