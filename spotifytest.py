@@ -1,4 +1,6 @@
 import datetime
+import json
+import os
 import random
 import re
 import argparse
@@ -44,6 +46,9 @@ class SpotifyInstance:
         self.trakts_id_list = []
         self.playlist_id = ""
         self.number_max_playlist = 9500
+        self.traks_json = []
+        self.path_to_save = os.environ[
+            'APPDATA'] + "/spotipyDatabaseFred/database.json"
         return
 
     def get_token(self):
@@ -54,21 +59,28 @@ class SpotifyInstance:
         else:
             print("error token : ", token_info)
 
-    def delete_all_playlist(self):
-        playlist_list_id = []
+    def mark_playlist_to_delete(self):
+        self.playlist_list_id_to_delete = []
         for i in range(0, 50):
             playlists = self.sp.user_playlists(self.username, limit=50)
+            number_of_plalist= 0
             for playlist in playlists['items']:
-                if playlist['id'] in playlist_list_id:
-                    print("error playlist_list_id deja unfollower")
-                    print(playlist_list_id)
-                    print(playlist['id'])
-                    # break
-                playlist_list_id.append(playlist['id'])
-                print("deleting playlist :", playlist)
-                print(
-                    self.sp.user_playlist_unfollow(self.username,
-                                                   playlist['id']))
+                number_of_plalist+=1
+                # if playlist['id'] in playlist_list_id:
+                # print("error playlist_list_id deja unfollower")
+                # print(playlist_list_id)
+                # print(playlist['id'])
+                # break
+                if re.search("AuN°[0-9].*", playlist['name']):
+                    print("mark playlist to delete :", playlist)
+                    self.playlist_list_id_to_delete.append(playlist['id'])
+            if number_of_plalist < 49:
+                break
+
+    def delete_marked_playlist(self):
+        print(self.playlist_list_id_to_delete)
+        for playlist in self.playlist_list_id_to_delete:
+            self.sp.user_playlist_unfollow(self.username, playlist)
 
     def calcul_time_token(self):
         time = datetime.datetime.now() - self.initial_time
@@ -116,10 +128,10 @@ class SpotifyInstance:
         # for i in range(0, 1):
             # if i == 0:
                 # artist_followed = self.sp.current_user_followed_artists(
-                    # limit=3, after=None)
+                # limit=50, after=None)
             # else:
                 # artist_followed = self.sp.current_user_followed_artists(
-                    # limit=3, after=artist_id)
+                # limit=50, after=artist_id)
         for i in range(0, 50):
             if i == 0:
                 artist_followed = self.sp.current_user_followed_artists(
@@ -199,56 +211,108 @@ class SpotifyInstance:
 
     def add_library_playlist(self):
         self.playlist_id = self.create_playlist()
-        artiste_list = self.get_artist_followed()
         trakts = []
-        for key in artiste_list:
-            album = (self.show_artist_albums(key))
-            for key in album:
-                self.calcul_time_token()
-                trakts = (self.show_album_tracks(key))
-                # self.add_traks_to_playlist(trakts)
-                self.add_trakts_id_to_list(trakts)
-        # logger.info("trakx_id_list : ", str(self.trakts_id_list)
-        self.add_list_of_trackts(self.trakts_id_list)
+        # for key in artiste_list:
+        # album = (self.show_artist_albums(key))
+        # for key in album:
+        # self.calcul_time_token()
+        # trakts = (self.show_album_tracks(key))
+        # self.traks_json.extend(trakts)
+        # # self.add_traks_to_playlist(trakts)
+        # self.add_trakts_id_to_list(trakts)
+        # # logger.info("trakx_id_list : ", str(self.trakts_id_list)
+        # self.add_list_of_trackts(self.trakts_id_list)
+        if self.complete == True:
+            logger.info("completeProcessing")
+            artiste_list = self.get_artist_followed()
+            for key in artiste_list:
+                album = (self.show_artist_albums(key))
+                for key in album:
+                    self.calcul_time_token()
+                    trakts = (self.show_album_tracks(key))
+                    self.traks_json.extend(trakts)
+                    # self.add_traks_to_playlist(trakts)
+                    self.add_trakts_id_to_list(trakts)
+                    # logger.info("trakx_id_list : ", str(self.trakts_id_list))
+            self.save_tracks_database_to_file(self.traks_json)
+            self.add_list_of_trackts(self.trakts_id_list)
+        else:
+            logger.info("use database processing")
+            self.add_trakts_id_to_list(self.read_database())
+            self.add_list_of_trackts(self.trakts_id_list)
+
+    def save_tracks_database_to_file(self, traks):
+        if not os.path.exists(os.path.dirname(self.path_to_save)):
+            try:
+                os.makedirs(os.path.dirname(self.path_to_save))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+        print(self.path_to_save)
+        with open(self.path_to_save, "w") as outfile:
+            json.dump(traks, outfile)
+
+    def read_database(self):
+        if not os.path.exists(os.path.dirname(self.path_to_save)):
+            raise Exception(
+                "database don t exist.launch complete process first")
+        with open(self.path_to_save) as json_file:
+            traks = json.load(json_file)
+        return traks
 
     def user_playlist_add_tracks_error(self, list_9500_track):
         while True:
-                    try:
-                        self.sp.user_playlist_add_tracks(
-                            self.username, self.playlist_id, list_9500_track)
-                        break
-                    except spotipy.client.SpotifyException as e:
-                        if (e.http_status == 429):
-                            print(e.http_status)
-                            time.sleep(1)
-                            continue
-                        elif (e.http_status == 401):
-                            self.refresh_token()
-                            continue
-                        else:
-                            print(e)
-                            raise e
+            try:
+                self.sp.user_playlist_add_tracks(self.username,
+                                                 self.playlist_id,
+                                                 list_9500_track)
+                break
+            except spotipy.client.SpotifyException as e:
+                if (e.http_status == 429):
+                    print(e.http_status)
+                    time.sleep(1)
+                    continue
+                elif (e.http_status == 401):
+                    self.refresh_token()
+                    continue
+                else:
+                    print(e)
+                    raise e
 
     def add_list_of_trackts(self, trakts_id):
+        logger.info("add_list_of_trackt")
         list_9500_track = []
         number_track_in_playlist = 0
         track_number_request = 0
+        total_trakt = 0
+        print("traks_id",trakts_id)
         for track in trakts_id:
+            # raise Exception()
             list_9500_track.append(track)
-            track_number_request +=1
+            track_number_request += 1
             number_track_in_playlist += 1
-            if track_number_request == 99:
+            total_trakt += 1
+            print(len(trakts_id))
+            print("total trakt" ,total_trakt)
+            if track_number_request == 99 or len(trakts_id) == total_trakt:
+                # logger.info("add traks to plalist : "+ list_9500_track)
+                print("add short list")
+                # raise Exception()
                 self.user_playlist_add_tracks_error(list_9500_track)
                 list_9500_track.clear()
                 track_number_request = 0
             if number_track_in_playlist >= self.number_max_playlist:
+                print("add new plalist")
                 self.playlist_id = self.create_playlist()
                 number_track_in_playlist = 0
 
     def add_trakts_id_to_list(self, tracks):
         for track in tracks:
             self.trakts_id_list.append(track['id'])
-        self.trakts_id_list = random.choices(self.trakts_id_list, k=len(self.trakts_id_list))
+        self.trakts_id_list = list(dict.fromkeys(self.trakts_id_list))
+        random.shuffle(self.trakts_id_list)
+        # print("trakts_id_list : ", self.trakts_id_list)
+        print("len trakts_id_list : ", len(self.trakts_id_list))
 
     def add_argument(self):
         parser = argparse.ArgumentParser(
@@ -268,17 +332,24 @@ class SpotifyInstance:
         parser.add_argument('--username',
                             required=True,
                             help='give your \
-        spotify username')
+        spotify username ')
+
+        parser.add_argument(
+            '--complete',
+            action="store_true",
+            help='rebuild complete database (don t reuse existing database)')
 
         args = parser.parse_args()
         # print(args.client_id)
         self.client_id = args.client_id
         self.client_secret = args.client_secret
         self.username = args.username
+        self.complete = args.complete
 
 
 if __name__ == '__main__':
     spotifyInstance = SpotifyInstance()
-    spotifyInstance.delete_all_playlist()
+    spotifyInstance.mark_playlist_to_delete()
     spotifyInstance.add_library_playlist()
+    spotifyInstance.delete_marked_playlist()
     # main()
