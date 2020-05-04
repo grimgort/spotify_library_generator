@@ -107,7 +107,7 @@ class SpotifyInstance:
                 # print(playlist['id'])
                 # break
                 if re.search("AuN°[0-9].*", playlist['name']) or re.search(
-                        "feature :.*", playlist['name']):
+                        "feature.*", playlist['name']):
                     print("mark playlist to delete :", playlist['name'])
                     self.playlist_list_id_to_delete.append(playlist['id'])
             if number_of_plalist < 49:
@@ -299,7 +299,9 @@ class SpotifyInstance:
         return traks
 
     def user_playlist_add_tracks_error(self, list_9500_track, playlist_id):
-        while True:
+        i=0
+        while i < 500:
+            i+=1
             try:
                 # print(list_9500_track)
                 self.sp.user_playlist_add_tracks(self.username, playlist_id,
@@ -315,7 +317,8 @@ class SpotifyInstance:
                     continue
                 else:
                     print(e)
-                    raise e
+                    continue
+                    # raise e
 
     def add_list_of_trackts(self, trakts_id, number_max_playlist_wanted,
                             playlist_base_name):
