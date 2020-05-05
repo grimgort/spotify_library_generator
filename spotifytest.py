@@ -59,7 +59,10 @@ class SpotifyInstance:
         self.path_to_save_name = os.environ[
             'APPDATA'] + "/spotipyDatabaseFred/database_name.json"
         self.feature_list = []
-        self.trakts_name_list=[]
+        self.trakts_name_list = []
+        self.album_list = []
+        self.path_to_save_album = os.environ[
+            'APPDATA'] + "/spotipyDatabaseFred/database_album.json"
         return
 
     def get_token(self):
@@ -189,6 +192,7 @@ class SpotifyInstance:
                 unique.add(name)
                 # self.show_album_tracks(album)
                 album_output.append(album)
+        self.album_list.extend(album_output)
         return album_output
 
     def audio_features_list(self):
@@ -275,6 +279,8 @@ class SpotifyInstance:
                     self.add_trakts_id_to_list(trakts)
                     # self.add_trakts_name_to_list(trakts)
 
+            self.save_tracks_database_to_file(self.album_list,
+                                              self.path_to_save_album)
             self.save_tracks_database_to_file(self.trakts_name_list,
                                               self.path_to_save_name)
             self.save_tracks_database_to_file(self.traks_json,
