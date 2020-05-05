@@ -45,6 +45,7 @@ class SpotifyInstance:
         self.number_track_in_playlist = 0
         self.playlist_number = 0
         self.trakts_id_list = []
+
         self.playlist_id = ""
         self.number_max_playlist = 9500
         self.number_max_request1 = 99
@@ -55,7 +56,10 @@ class SpotifyInstance:
             'APPDATA'] + "/spotipyDatabaseFred/database.json"
         self.path_to_save_feature = os.environ[
             'APPDATA'] + "/spotipyDatabaseFred/database_feature.json"
+        self.path_to_save_name = os.environ[
+            'APPDATA'] + "/spotipyDatabaseFred/database_name.json"
         self.feature_list = []
+        self.trakts_name_list=[]
         return
 
     def get_token(self):
@@ -269,6 +273,10 @@ class SpotifyInstance:
                     trakts = (self.show_album_tracks(key))
                     self.traks_json.extend(trakts)
                     self.add_trakts_id_to_list(trakts)
+                    # self.add_trakts_name_to_list(trakts)
+
+            self.save_tracks_database_to_file(self.trakts_name_list,
+                                              self.path_to_save_name)
             self.save_tracks_database_to_file(self.traks_json,
                                               self.path_to_save)
             self.feature_list = self.audio_features_list()
@@ -368,9 +376,28 @@ class SpotifyInstance:
     def add_trakts_id_to_list(self, tracks):
         for track in tracks:
             self.trakts_id_list.append(track['id'])
+            self.trakts_name_list.append(track['name'])
+            len_track_name =len(self.trakts_name_list)
+            self.trakts_name_list = list(dict.fromkeys(self.trakts_name_list))
+            len_track_name2 =len(self.trakts_name_list)
+            if len_track_name2 < len_track_name:
+                print("delete doubled trakt", track['name'])
+                self.trakts_id_list.pop()
+
         self.trakts_id_list = list(dict.fromkeys(self.trakts_id_list))
         random.shuffle(self.trakts_id_list)
         print("len trakts_id_list : ", len(self.trakts_id_list))
+
+    # def add_trakts_name_to_list(self, tracks):
+        # for track in tracks:
+            # self.trakts_name_list.append(track['name'])
+        # save_tracks_database_to_file()
+        # self.save_tracks_database_to_file(trakts_name_list,
+                                              # self.path_to_save_name)
+        # print(trakts_name_list)
+        # trakts_name_list = list(dict.fromkeys(trakts_name_list))
+        # random.shuffle(trakts_id_list)
+        # print("len trakts_id_list : ", len(self.trakts_id_list))
 
     def add_argument(self):
         parser = argparse.ArgumentParser(
