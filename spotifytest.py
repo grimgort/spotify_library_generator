@@ -374,30 +374,24 @@ class SpotifyInstance:
                 number_track_in_playlist = 0
 
     def add_trakts_id_to_list(self, tracks):
+        dico = {}
+        dico2={}
         for track in tracks:
-            self.trakts_id_list.append(track['id'])
-            self.trakts_name_list.append(track['name'])
-            len_track_name =len(self.trakts_name_list)
-            self.trakts_name_list = list(dict.fromkeys(self.trakts_name_list))
-            len_track_name2 =len(self.trakts_name_list)
-            if len_track_name2 < len_track_name:
-                print("delete doubled trakt", track['name'])
-                self.trakts_id_list.pop()
+            dico[track['id']] = track['name']
+        l = list(dico.items())
+        random.shuffle(l)
+        dico = dict(l)
+        for key, value in dico.items():
+          if value not in dico2.values():
+            dico2[key] = value
+
+        for key, value in dico2.items():
+            self.trakts_id_list.append(key)
+            self.trakts_name_list.append(value)
 
         self.trakts_id_list = list(dict.fromkeys(self.trakts_id_list))
         random.shuffle(self.trakts_id_list)
         print("len trakts_id_list : ", len(self.trakts_id_list))
-
-    # def add_trakts_name_to_list(self, tracks):
-        # for track in tracks:
-            # self.trakts_name_list.append(track['name'])
-        # save_tracks_database_to_file()
-        # self.save_tracks_database_to_file(trakts_name_list,
-                                              # self.path_to_save_name)
-        # print(trakts_name_list)
-        # trakts_name_list = list(dict.fromkeys(trakts_name_list))
-        # random.shuffle(trakts_id_list)
-        # print("len trakts_id_list : ", len(self.trakts_id_list))
 
     def add_argument(self):
         parser = argparse.ArgumentParser(
