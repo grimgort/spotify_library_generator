@@ -21,15 +21,18 @@ logger = logging.getLogger('spotifyTest')
 logger.setLevel(logging.DEBUG)
 logging.basicConfig(filename='spotilog.txt', level='INFO')
 
+
 class Traks:
-    def __init__(self, id_sp, artiste, album, genres, energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo):
+    def __init__(self, id_sp, artiste, album, genres, energy, acousticness,
+                 danceability, instrumentalness, liveness, loudness,
+                 speechiness, valence, tempo):
         self.id_sp = id_sp
-        self.artiste= artiste
+        self.artiste = artiste
         self.album = album
         self.genres = genres
         self.energy = energy
         self.acousticness = acousticness
-        self.danceability=danceability
+        self.danceability = danceability
         self.instrumentalness = instrumentalness
         self.liveness = liveness
         self.loudness = loudness
@@ -37,10 +40,11 @@ class Traks:
         self.valence = valence
         self.tempo = tempo
 
+
 class SpotifyInstance:
     def __init__(self):
         self.add_argument()
-        self.scope = 'user-follow-read playlist-modify-public playlist-modify-private'
+        self.scope = 'user-follow-read playlist-modify-public playlist-modify-private user-read-private user-library-modify user-library-read'
         self.spo = oauth.SpotifyOAuth(client_id=self.client_id,
                                       client_secret=self.client_secret,
                                       redirect_uri=redirect_uri,
@@ -116,8 +120,8 @@ class SpotifyInstance:
                 number_of_plalist += 1
                 if re.search("AuN°[0-9].*", playlist['name']) or re.search(
                         "feature.*", playlist['name']) or re.search(
-                        "Xgenre.*", playlist['name'])or re.search(
-                        "genre.*", playlist['name']):
+                            "Xgenre.*", playlist['name']) or re.search(
+                                "genre.*", playlist['name']):
                     print("mark playlist to delete :", playlist['name'])
                     self.playlist_list_id_to_delete.append(playlist['id'])
             if number_of_plalist < 49:
@@ -178,17 +182,20 @@ class SpotifyInstance:
                 # print(key['name'])
                 artist = self.get_artist(key['name'])
                 if (artist != None):
-                    artist_list.append([artist, key['genres'],key['name']])
+                    artist_list.append([artist, key['genres'], key['name']])
                     print(key['name'])
 
         return artist_list
 
     def create_database(self):
         database = []
-        track_id=[]
+        track_id = []
+
+        database = self.get_liked_track()
+
         artiste_list = self.get_artist_followed()
-        for key, genre,name in artiste_list:
-            album,album_name= (self.show_artist_albums(key))
+        for key, genre, name in artiste_list:
+            album, album_name = (self.show_artist_albums(key))
             for key in album:
                 self.calcul_time_token()
                 trakts = (self.show_album_tracks(key))
@@ -197,16 +204,26 @@ class SpotifyInstance:
                 energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
                     track_id)
                 # print("energy",energy)
-                if len(track_id) != 0 and len(energy)!=0:
+                if len(track_id) != 0 and len(energy) != 0:
                     for i in range(0, len(track_id) - 1):
-                        print("i=",i)
-                        print(key['name'])
-                        print(track_id[i], track_name[i])
+                        # print("i=",i)
+                        # print(key['name'])
+                        # print(track_id[i], track_name[i])
                         # print(energy[i])
                         try:
-                            database.append([name, genre, key['name'], track_id[i], track_name[i], energy[i], acousticness[i], danceability[i], instrumentalness[i], liveness[i], loudness[i], speechiness[i], valence[i], tempo[i]])
-                        except Exception :
-                            database.append([name, genre, key['name'], track_id[i], track_name[i], None, None, None, None, None, None, None, None, None])
+                            database.append([
+                                name, genre, key['name'], track_id[i],
+                                track_name[i], energy[i], acousticness[i],
+                                danceability[i], instrumentalness[i],
+                                liveness[i], loudness[i], speechiness[i],
+                                valence[i], tempo[i]
+                            ])
+                        except Exception:
+                            database.append([
+                                name, genre, key['name'], track_id[i],
+                                track_name[i], None, None, None, None, None,
+                                None, None, None, None
+                            ])
                             continue
         return database
 
@@ -238,10 +255,12 @@ class SpotifyInstance:
         feature_list = []
         # print("trakts_id_liste",trakts_id_liste)
         for key in trakts_id_liste:
-            print("fred1",key)
+            # print("fred1", key)
             number_trak_boucle += 1
             list_key.append(key)
-            if len(list_key)== self.number_max_request1 or number_trak_boucle == len(trakts_id_liste):
+            if len(list_key
+                   ) == self.number_max_request1 or number_trak_boucle == len(
+                       trakts_id_liste):
                 feature_list.extend(self.sp.audio_features(list_key))
                 list_key.clear()
         # print("feature_list", feature_list)
@@ -256,7 +275,7 @@ class SpotifyInstance:
         tempo = []
         for key in feature_list:
             # print(key)
-            if key !=None:
+            if key != None:
                 energy.append(key['energy'])
                 acousticness.append(key['acousticness'])
                 danceability.append(key['danceability'])
@@ -285,7 +304,7 @@ class SpotifyInstance:
             # print(key)
             for genre in key.genres:
                 # print(genre)
-                if re.search(genres_name,genre):
+                if re.search(genres_name, genre):
                     # print("fred",genre)
                     list_track.append(key.id_sp)
                     break
@@ -310,12 +329,22 @@ class SpotifyInstance:
         # print(playlist_name)
         self.add_list_of_trackts(list_track, 5, playlist_name)
 
-    def playlist_from_feature(self, feature_name, min_max,value_arg):
+    def playlist_from_feature(self, feature_name, min_max, value_arg):
         print("processing playlist : ", feature_name)
         feature_dico = {}
-        b=[]
+        b = []
         for key in self.track_list:
-            feature = {"energy": key.energy, "acousticness": key.acousticness, "danceability": key.danceability, "instrumentalness": key.instrumentalness, "liveness": key.liveness, "loudness": key.loudness, "speechiness": key.speechiness, "valence": key.valence, "tempo": key.tempo}
+            feature = {
+                "energy": key.energy,
+                "acousticness": key.acousticness,
+                "danceability": key.danceability,
+                "instrumentalness": key.instrumentalness,
+                "liveness": key.liveness,
+                "loudness": key.loudness,
+                "speechiness": key.speechiness,
+                "valence": key.valence,
+                "tempo": key.tempo
+            }
             if feature[feature_name] != None:
                 feature_dico[key.id_sp] = feature[feature_name]
         # print(feature_dico)
@@ -325,29 +354,28 @@ class SpotifyInstance:
                 feature_dico = sorted(feature_dico.items(),
                                       key=lambda kv: kv[1])
                 # print(feature_dico)
-                if value_arg !=None:
+                if value_arg != None:
                     for key, value in feature_dico:
                         # print(key,value)
                         if value < value_arg:
                             b.append(key)
                 else:
-                   b = [x[0] for x in feature_dico]
+                    b = [x[0] for x in feature_dico]
             else:
                 playlist_name = "feature : " + feature_name
                 feature_dico = sorted(feature_dico.items(),
                                       key=lambda kv: kv[1],
                                       reverse=True)
-                if value_arg !=None:
+                if value_arg != None:
                     for key, value in feature_dico:
                         if value > value_arg:
                             b.append(key)
                 else:
-                   b = [x[0] for x in feature_dico]
-           # b = [x[0] for x in feature_dico]
+                    b = [x[0] for x in feature_dico]
+        # b = [x[0] for x in feature_dico]
             print("len(b)=", len(b))
 
             self.add_list_of_trackts(b, 1, playlist_name)
-
 
     def show_album_tracks(self, album):
         tracks = []
@@ -365,23 +393,23 @@ class SpotifyInstance:
         self.big_playlist_from_database()
         self.playlist_from_genres_pattern("french")
         self.playlist_from_genres_pattern("classical")
-        self.playlist_from_feature("energy", True,0.5)
+        self.playlist_from_feature("energy", True, 0.5)
         self.playlist_from_feature("acousticness", True, 0.5)
         self.playlist_from_feature("danceability", True, 0.5)
         self.playlist_from_feature("instrumentalness", True, 0.5)
         self.playlist_from_feature("liveness", True, 0.5)
         self.playlist_from_feature("loudness", True, 0.5)
-        self.playlist_from_feature("speechiness", True,None)
+        self.playlist_from_feature("speechiness", True, None)
         self.playlist_from_feature("valence", True, 0.5)
-        self.playlist_from_feature("tempo", True,100)
+        self.playlist_from_feature("tempo", True, 100)
 
-        self.playlist_from_feature("energy", False,0.5)
-        self.playlist_from_feature("acousticness", False,0.5)
-        self.playlist_from_feature("danceability", False,0.5)
-        self.playlist_from_feature("instrumentalness", False,0.5)
-        self.playlist_from_feature("liveness", False,0.5)
-        self.playlist_from_feature("loudness", False,0.5)
-        self.playlist_from_feature("speechiness", False,None)
+        self.playlist_from_feature("energy", False, 0.5)
+        self.playlist_from_feature("acousticness", False, 0.5)
+        self.playlist_from_feature("danceability", False, 0.5)
+        self.playlist_from_feature("instrumentalness", False, 0.5)
+        self.playlist_from_feature("liveness", False, 0.5)
+        self.playlist_from_feature("loudness", False, 0.5)
+        self.playlist_from_feature("speechiness", False, None)
         self.playlist_from_feature("valence", False, 0.5)
         self.playlist_from_feature("tempo", False, 100)
         list_genres = self.print_genres()
@@ -392,21 +420,24 @@ class SpotifyInstance:
         if self.complete == True:
             logger.info("create database")
             database = self.create_database()
-            self.save_tracks_database_to_file(database,self.final_database)
+            self.save_tracks_database_to_file(database, self.final_database)
         else:
             logger.info("use database processing")
             database = self.read_database(self.final_database)
             # self.add_trakts_id_to_list(self.read_database(self.path_to_save))
             # self.feature_list = self.read_database(self.path_to_save_feature)
-        
+
         self.track_list = []
         for key in database:
-            traks = Traks(key[3], key[0], key[2], key[1], key[5], key[6], key[7], key[8], key[9], key[10],key[11],key[12], key[13])
+            traks = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
+                          key[7], key[8], key[9], key[10], key[11], key[12],
+                          key[13])
             self.track_list.append(traks)
 
         if self.complete == True:
             list_genres = self.print_genres()
-            self.save_tracks_database_to_file(list_genres,self.genres_database)
+            self.save_tracks_database_to_file(list_genres,
+                                              self.genres_database)
         else:
             list_genres = self.read_database(self.genres_database)
 
@@ -425,7 +456,7 @@ class SpotifyInstance:
             list_of_id.append(key.id_sp)
 
         self.add_list_of_trackts(list_of_id, 30, "AuN°")
-    
+
     def print_genres(self):
         list_genres = []
         for key in self.track_list:
@@ -435,7 +466,6 @@ class SpotifyInstance:
                     list_genres.append(key2)
                     # print(list_genres)
         return list_genres
-
 
     def save_tracks_database_to_file(self, traks, path_to_save):
         if not os.path.exists(os.path.dirname(path_to_save)):
@@ -541,12 +571,58 @@ class SpotifyInstance:
             # else:
             # print("track duplicate deleted : ", value)
         trakts_id_list = []
-        trakts_name_list =[]
+        trakts_name_list = []
 
         for key, value in dico2.items():
             trakts_id_list.append(key)
             trakts_name_list.append(value)
         return trakts_id_list, trakts_name_list
+
+    
+
+    def get_liked_track(self):
+        database=[]
+        track_name=[]
+        track_id=[]
+        offset = 0
+        for i in range(0, 50):
+            trak = self.sp.current_user_saved_tracks(limit=self.number_max_request2, offset=offset)
+            offset += self.number_max_request2
+            # print(trak['items'])
+            # track_id, trak_name = self.add_trakts_id_to_list(trak['items'])
+            # list_track_id.append(track_id)
+            for key in trak['items']:
+                    # print(key['track']['id'])
+                    # print(key['track']['name'])
+                    # for name in key['track']['artists']:
+                        # artiste_name = name['name']
+                        # print(name['name'])
+                    track_id.append(key['track']['id'])
+                    track_name.append(key['track']['name'])
+                    # list_trak.append((key['track']['id'],key['track']['name'] ))
+            energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
+            track_id)
+
+            if len(track_id) != 0 and len(energy) != 0:
+                for i in range(0, len(track_id) - 1):
+                    # print("i=",i)
+                    # print(key['name'])
+                    # print(track_id[i], track_name[i])
+                    # print(energy[i])
+                    try:
+                        database.append([
+                            "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
+                            energy[i], acousticness[i], danceability[i],
+                            instrumentalness[i], liveness[i], loudness[i],
+                            speechiness[i], valence[i], tempo[i]
+                        ])
+                    except Exception:
+                        database.append([
+                            "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
+                            None, None, None, None, None, None, None, None, None
+                        ])
+                        continue
+        return database
 
     def add_argument(self):
         parser = argparse.ArgumentParser(
@@ -587,6 +663,5 @@ if __name__ == '__main__':
     spotifyInstance.mark_playlist_to_delete()
     spotifyInstance.create_or_read_database()
     spotifyInstance.add_library_playlist()
-    spotifyInstance.print_genres()
     spotifyInstance.delete_marked_playlist()
     # main()
