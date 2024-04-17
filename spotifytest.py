@@ -65,7 +65,7 @@ class SpotifyInstance:
         self.playlist_number = 0
 
         self.playlist_id = ""
-        self.number_max_playlist = 9500
+        self.number_max_playlist = 500
         self.number_max_request1 = 99
         self.number_max_request2 = 49
         # self.number_max_request2 = 5
@@ -447,11 +447,14 @@ class SpotifyInstance:
         random.shuffle(self.track_list)
         list_of_id = []
         classical = 0
+        # limite le nombre de music classic par playlist (0 ici)
+        maximum_of_classical_music = 0
         for key in self.track_list:
             if "classical" in key.genres:
                 # print("classical = ",classical)
                 classical += 1
-                if classical > (len(self.track_list) / 15):
+                # if classical > (len(self.track_list) / 15):
+                if classical > maximum_of_classical_music:
                     continue
             list_of_id.append(key.id_sp)
 
