@@ -65,15 +65,20 @@ class SpotifyInstance:
         self.playlist_number = 0
 
         self.playlist_id = ""
-        self.number_max_playlist = 500
+        self.maximum_song_by_playlist = 500
+        self.maximum_playlist_to_create = 5
         self.number_max_request1 = 99
         self.number_max_request2 = 49
         # self.number_max_request2 = 5
 
-        self.final_database = os.environ[
-            'APPDATA'] + "/spotipyDatabaseFred/database_final.json"
-        self.genres_database = os.environ[
-            'APPDATA'] + "/spotipyDatabaseFred/database_genres.json"
+        # self.final_database = os.environ[
+        #     'APPDATA'] + "/spotipyDatabaseFred/database_final.json"
+        # self.genres_database = os.environ[
+        #     'APPDATA'] + "/spotipyDatabaseFred/database_genres.json"
+
+        self.final_database = "./spotipyDatabaseFred/database_final.json"
+        self.genres_database = "./spotipyDatabaseFred/database_genres.json"
+
         return
 
     def get_token(self):
@@ -115,16 +120,26 @@ class SpotifyInstance:
                                                limit=self.number_max_request2,
                                                offset=offset)
             offset += self.number_max_request2
-            number_of_plalist = 0
+            number_of_playlist = 0
             for playlist in playlists['items']:
-                number_of_plalist += 1
-                if re.search("AuN°[0-9].*", playlist['name']) or re.search(
-                        "feature.*", playlist['name']) or re.search(
+                number_of_playlist += 1
+                if self.args.with_playlist_from_genre:
+                    if  re.search(
                             "Xgenre.*", playlist['name']) or re.search(
                                 "genre.*", playlist['name']):
+                        print("mark playlist to delete :", playlist['name'])
+                        self.playlist_list_id_to_delete.append(playlist['id'])
+
+                if self.args.with_playlist_from_feature:
+                    if re.search("AuN°[0-9].*", playlist['name']) or re.search(
+                        "feature.*", playlist['name']) :
+                        print("mark playlist to delete :", playlist['name'])
+                        self.playlist_list_id_to_delete.append(playlist['id'])
+
+                if re.search("AuN°[0-9].*", playlist['name']) :
                     print("mark playlist to delete :", playlist['name'])
                     self.playlist_list_id_to_delete.append(playlist['id'])
-            if number_of_plalist < 49:
+            if number_of_playlist < 49:
                 break
 
     def delete_marked_playlist(self):
@@ -311,7 +326,7 @@ class SpotifyInstance:
         playlist_name = "genre pat : " + str(genres_name)
         # print(len(list_track),len(list_track))
         # print(playlist_name)
-        self.add_list_of_trackts(list_track, 5, playlist_name)
+        self.add_list_of_trackts(list_track, self.maximum_playlist_to_create, playlist_name)
 
     def playlist_from_genres(self, genres_name):
         # print("processing playlist : ", genres_name)
@@ -327,7 +342,7 @@ class SpotifyInstance:
         playlist_name = "Xgenre : " + str(genres_name)
         # print(len(list_track),len(list_track))
         # print(playlist_name)
-        self.add_list_of_trackts(list_track, 5, playlist_name)
+        self.add_list_of_trackts(list_track, self.maximum_playlist_to_create, playlist_name)
 
     def playlist_from_feature(self, feature_name, min_max, value_arg):
         print("processing playlist : ", feature_name)
@@ -391,31 +406,34 @@ class SpotifyInstance:
 
     def add_library_playlist(self):
         self.big_playlist_from_database()
-        self.playlist_from_genres_pattern("french")
-        self.playlist_from_genres_pattern("classical")
-        self.playlist_from_feature("energy", True, 0.5)
-        self.playlist_from_feature("acousticness", True, 0.5)
-        self.playlist_from_feature("danceability", True, 0.5)
-        self.playlist_from_feature("instrumentalness", True, 0.5)
-        self.playlist_from_feature("liveness", True, 0.5)
-        self.playlist_from_feature("loudness", True, 0.5)
-        self.playlist_from_feature("speechiness", True, None)
-        self.playlist_from_feature("valence", True, 0.5)
-        self.playlist_from_feature("tempo", True, 100)
+        if self.args.with_playlist_from_genre:
+            self.playlist_from_genres_pattern("french")
+            self.playlist_from_genres_pattern("classical")
+            list_genres = self.print_genres()
+            for key in list_genres:
+                self.playlist_from_genres(key)
 
-        self.playlist_from_feature("energy", False, 0.5)
-        self.playlist_from_feature("acousticness", False, 0.5)
-        self.playlist_from_feature("danceability", False, 0.5)
-        self.playlist_from_feature("instrumentalness", False, 0.5)
-        self.playlist_from_feature("liveness", False, 0.5)
-        self.playlist_from_feature("loudness", False, 0.5)
-        self.playlist_from_feature("speechiness", False, None)
-        self.playlist_from_feature("valence", False, 0.5)
-        self.playlist_from_feature("tempo", False, 100)
-        list_genres = self.print_genres()
-        for key in list_genres:
-            self.playlist_from_genres(key)
+        if self.args.with_playlist_from_feature:
+            self.playlist_from_feature("energy", True, 0.5)
+            self.playlist_from_feature("acousticness", True, 0.5)
+            self.playlist_from_feature("danceability", True, 0.5)
+            self.playlist_from_feature("instrumentalness", True, 0.5)
+            self.playlist_from_feature("liveness", True, 0.5)
+            self.playlist_from_feature("loudness", True, 0.5)
+            self.playlist_from_feature("speechiness", True, None)
+            self.playlist_from_feature("valence", True, 0.5)
+            self.playlist_from_feature("tempo", True, 100)
 
+            self.playlist_from_feature("energy", False, 0.5)
+            self.playlist_from_feature("acousticness", False, 0.5)
+            self.playlist_from_feature("danceability", False, 0.5)
+            self.playlist_from_feature("instrumentalness", False, 0.5)
+            self.playlist_from_feature("liveness", False, 0.5)
+            self.playlist_from_feature("loudness", False, 0.5)
+            self.playlist_from_feature("speechiness", False, None)
+            self.playlist_from_feature("valence", False, 0.5)
+            self.playlist_from_feature("tempo", False, 100)
+        
     def create_or_read_database(self):
         if self.complete == True:
             logger.info("create database")
@@ -458,7 +476,7 @@ class SpotifyInstance:
                     continue
             list_of_id.append(key.id_sp)
 
-        self.add_list_of_trackts(list_of_id, 30, "AuN°")
+        self.add_list_of_trackts(list_of_id, self.maximum_playlist_to_create, "AuN°")
 
     def print_genres(self):
         list_genres = []
@@ -546,7 +564,7 @@ class SpotifyInstance:
                                                     playlist_id)
                 list_9500_track.clear()
                 track_number_request = 0
-            if number_track_in_playlist >= self.number_max_playlist:
+            if number_track_in_playlist >= self.maximum_song_by_playlist:
                 playlist_number += 1
                 if playlist_number > number_max_playlist_wanted:
                     break
@@ -652,19 +670,39 @@ class SpotifyInstance:
             action="store_true",
             help='rebuild complete database (don t reuse existing database)')
 
-        args = parser.parse_args()
+        parser.add_argument('--with_playlist_from_genre',action="store_true",help='create a playlist with the French and classic genre')
+
+        parser.add_argument('--with_playlist_from_feature',action="store_true",help='create a playlist with spotify feature (energy, acousticness, danceability,...)')
+
+        self.args = parser.parse_args()
         # print(args.client_id)
-        self.client_id = args.client_id
-        self.client_secret = args.client_secret
-        self.username = args.username
-        self.complete = args.complete
+        self.client_id = self.args.client_id
+        self.client_secret = self.args.client_secret
+        self.username = self.args.username
+        self.complete = self.args.complete
 
 
 if __name__ == '__main__':
     spotifyInstance = SpotifyInstance()
     spotifyInstance.refresh_token()
     spotifyInstance.mark_playlist_to_delete()
+
+    debut = time.time()
+    logger.info('debut create_or_read_database: %s', debut)
     spotifyInstance.create_or_read_database()
+    fin = time.time()
+    # Calcul du temps écoulé
+    temps_ecoule = fin - debut
+    logger.info('temp ecoule create_or_read_database: %s', temps_ecoule)
+
+    debut = time.time()
+    logger.info('debut add_library_playlist: %s', debut)
     spotifyInstance.add_library_playlist()
+    fin = time.time()
+    # Calcul du temps écoulé
+    temps_ecoule = fin - debut
+    logger.info('temp ecoule add_library_playlist: %s', temps_ecoule)
+
+
     spotifyInstance.delete_marked_playlist()
     # main()
