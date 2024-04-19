@@ -683,6 +683,7 @@ class SpotifyInstance:
 
 
 if __name__ == '__main__':
+    print("spotify begin script")
     spotifyInstance = SpotifyInstance()
     spotifyInstance.refresh_token()
     spotifyInstance.mark_playlist_to_delete()
