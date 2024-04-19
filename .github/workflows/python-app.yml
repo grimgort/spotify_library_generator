@@ -40,12 +40,31 @@ jobs:
     #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         
-    - name: Test with pytest
-      env: # Or as an environment variable
-        super_secret: ${{ secrets.KEY1}}
-        super_secret2: ${{ secrets.CLIEN_SECRET}}
-      run: |
-        python spotifytest.py --client_id super_secret --client_secret $super_secret2 --username grimgort --complete
+    # - name: Test with pytest
+    #   env: # Or as an environment variable
+    #     super_secret: ${{ secrets.KEY1}}
+    #     super_secret2: ${{ secrets.CLIEN_SECRET}}
+    #   run: |
+    #     python spotifytest.py --client_id super_secret --client_secret $super_secret2 --username grimgort --complete
+
+    - name: Run Python script with pytest and stream logs
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const exec2 = require('child_process').exec;
+          const child = exec2('python spotifytest.py --client_id ${{ secrets.KEY1 }} --client_secret ${{ secrets.CLIEN_SECRET }} --username grimgort --complete', { maxBuffer: 1024 * 1024 });
+
+          child.stdout.on('data', function(data) {
+            console.log(data.toString());
+          });
+
+          child.stderr.on('data', function(data) {
+            console.error(data.toString());
+          });
+
+          child.on('exit', function(code) {
+            console.log('Child process exited with exit code ' + code);
+          });
 
     - name: Upload Log File as Artifact
       uses: actions/upload-artifact@v2
