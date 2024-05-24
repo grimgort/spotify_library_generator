@@ -201,6 +201,85 @@ class SpotifyInstance:
                     print(key['name'])
 
         return artist_list
+    def complete_database(self,database):
+        track_id = []
+        self.track_list = []
+        for key in database:
+            traks = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
+                        key[7], key[8], key[9], key[10], key[11], key[12],
+                        key[13])
+            self.track_list.append(traks)
+
+        
+        database_temporary = self.get_liked_track()
+        track_list2=[]
+        for key in database_temporary:
+            traks2 = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
+                        key[7], key[8], key[9], key[10], key[11], key[12],
+                        key[13])
+            track_list2.append(traks2)
+        compteur = 0
+        for key in track_list2:
+            compteur+=1
+            add_track = True
+            # print(key)
+            # for title_liked_exist in key.id_sp:
+                # print(genre)
+            for key2 in self.track_list:
+                if  re.search(key.id_sp, key2.id_sp):
+                    add_track = False
+
+                        
+            if add_track:
+                        try:    
+                            database.append(database_temporary[compteur-1])
+                        except Exception:
+                            database.append(database_temporary[compteur-1])
+                            continue      
+
+            
+
+        artiste_list = self.get_artist_followed()
+        for key, genre, name in artiste_list:
+            album, album_name = (self.show_artist_albums(key))
+            for key in self.track_list:
+                # print(key)
+                for album_exist in key.album:
+                    # print(genre)
+                    for key in album:
+                        if not re.search(album_exist, key):
+                            self.calcul_time_token()
+                            trakts = (self.show_album_tracks(key))
+                            track_id, track_name = self.add_trakts_id_to_list(trakts)
+                            print(track_id)
+                            energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
+                                track_id)
+                            # print("energy",energy)
+                            if len(track_id) != 0 and len(energy) != 0:
+                                for i in range(0, len(track_id) - 1):
+                                    # print("i=",i)
+                                    # print(key['name'])
+                                    # print(track_id[i], track_name[i])
+                                    # print(energy[i])
+                                    try:
+                                        database.append([
+                                            name, genre, key['name'], track_id[i],
+                                            track_name[i], energy[i], acousticness[i],
+                                            danceability[i], instrumentalness[i],
+                                            liveness[i], loudness[i], speechiness[i],
+                                            valence[i], tempo[i], album_name
+                                        ])
+                                    except Exception:
+                                        database.append([
+                                            name, genre, key['name'], track_id[i],
+                                            track_name[i], None, None, None, None, None,
+                                            None, None, None, None, album_name
+                                        ])
+                                        continue
+                                self.save_tracks_database_to_file(database, self.final_database)
+        return database     
+             
+
 
     def create_database(self):
         database = []
@@ -231,13 +310,13 @@ class SpotifyInstance:
                                 track_name[i], energy[i], acousticness[i],
                                 danceability[i], instrumentalness[i],
                                 liveness[i], loudness[i], speechiness[i],
-                                valence[i], tempo[i]
+                                valence[i], tempo[i], album_name
                             ])
                         except Exception:
                             database.append([
                                 name, genre, key['name'], track_id[i],
                                 track_name[i], None, None, None, None, None,
-                                None, None, None, None
+                                None, None, None, None, album_name
                             ])
                             continue
         return database
@@ -265,20 +344,6 @@ class SpotifyInstance:
         return album_output, albums_name
 
     def audio_features_list(self, trakts_id_liste):
-        number_trak_boucle = 0
-        list_key = []
-        feature_list = []
-        # print("trakts_id_liste",trakts_id_liste)
-        for key in trakts_id_liste:
-            # print("fred1", key)
-            number_trak_boucle += 1
-            list_key.append(key)
-            if len(list_key
-                   ) == self.number_max_request1 or number_trak_boucle == len(
-                       trakts_id_liste):
-                feature_list.extend(self.sp.audio_features(list_key))
-                list_key.clear()
-        # print("feature_list", feature_list)
         energy = []
         acousticness = []
         danceability = []
@@ -288,29 +353,71 @@ class SpotifyInstance:
         speechiness = []
         valence = []
         tempo = []
-        for key in feature_list:
-            # print(key)
-            if key != None:
-                energy.append(key['energy'])
-                acousticness.append(key['acousticness'])
-                danceability.append(key['danceability'])
-                instrumentalness.append(key['instrumentalness'])
-                liveness.append(key['liveness'])
-                loudness.append(key['loudness'])
-                speechiness.append(key['speechiness'])
-                valence.append(key['valence'])
-                tempo.append(key['tempo'])
-            else:
-                energy.append(None)
-                acousticness.append(None)
-                danceability.append(None)
-                instrumentalness.append(None)
-                liveness.append(None)
-                loudness.append(None)
-                speechiness.append(None)
-                valence.append(None)
-                tempo.append(None)
+        if self.args.database_without_feature:
+            for key in trakts_id_liste:
+                    energy.append(None)
+                    acousticness.append(None)
+                    danceability.append(None)
+                    instrumentalness.append(None)
+                    liveness.append(None)
+                    loudness.append(None)
+                    speechiness.append(None)
+                    valence.append(None)
+                    tempo.append(None)
+                    return energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo
+
+        try:
+            number_trak_boucle = 0
+            list_key = []
+            feature_list = []
+            # print("trakts_id_liste",trakts_id_liste)
+            for key in trakts_id_liste:
+                # print("fred1", key)
+                number_trak_boucle += 1
+                list_key.append(key)
+                if len(list_key
+                    ) == self.number_max_request1 or number_trak_boucle == len(
+                        trakts_id_liste):
+                    feature_list.extend(self.sp.audio_features(list_key))
+                    list_key.clear()
+            # print("feature_list", feature_list)
+
+            for key in feature_list:
+                # print(key)
+                if key != None:
+                    energy.append(key['energy'])
+                    acousticness.append(key['acousticness'])
+                    danceability.append(key['danceability'])
+                    instrumentalness.append(key['instrumentalness'])
+                    liveness.append(key['liveness'])
+                    loudness.append(key['loudness'])
+                    speechiness.append(key['speechiness'])
+                    valence.append(key['valence'])
+                    tempo.append(key['tempo'])
+                else:
+                    energy.append(None)
+                    acousticness.append(None)
+                    danceability.append(None)
+                    instrumentalness.append(None)
+                    liveness.append(None)
+                    loudness.append(None)
+                    speechiness.append(None)
+                    valence.append(None)
+                    tempo.append(None)
+        except:
+            for key in trakts_id_liste:
+                    energy.append(None)
+                    acousticness.append(None)
+                    danceability.append(None)
+                    instrumentalness.append(None)
+                    liveness.append(None)
+                    loudness.append(None)
+                    speechiness.append(None)
+                    valence.append(None)
+                    tempo.append(None)
+                    continue
         return energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo
+
 
     def playlist_from_genres_pattern(self, genres_name):
         # print("processing playlist : ", genres_name)
@@ -439,6 +546,12 @@ class SpotifyInstance:
             logger.info("create database")
             database = self.create_database()
             self.save_tracks_database_to_file(database, self.final_database)
+        elif self.args.complete2 == True:
+            logger.info("create database")
+            database = self.read_database(self.final_database)
+
+            database = self.complete_database(database)
+            self.save_tracks_database_to_file(database, self.final_database)
         else:
             logger.info("use database processing")
             database = self.read_database(self.final_database)
@@ -501,8 +614,9 @@ class SpotifyInstance:
 
     def read_database(self, file_to_read):
         if not os.path.exists(os.path.dirname(file_to_read)):
-            raise Exception(
-                "database don t exist.launch complete process first")
+            return []
+            # raise Exception(
+            #     "database don t exist.launch complete process first")
         with open(file_to_read) as json_file:
             traks = json.load(json_file)
         return traks
@@ -635,12 +749,12 @@ class SpotifyInstance:
                             "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
                             energy[i], acousticness[i], danceability[i],
                             instrumentalness[i], liveness[i], loudness[i],
-                            speechiness[i], valence[i], tempo[i]
+                            speechiness[i], valence[i], tempo[i], "liked"
                         ])
                     except Exception:
                         database.append([
                             "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
-                            None, None, None, None, None, None, None, None, None
+                            None, None, None, None, None, None, None, None, None, "liked"
                         ])
                         continue
         return database
@@ -674,12 +788,17 @@ class SpotifyInstance:
 
         parser.add_argument('--with_playlist_from_feature',action="store_true",help='create a playlist with spotify feature (energy, acousticness, danceability,...)')
 
+        parser.add_argument('--database_without_feature',action="store_true",help='create a database without spotify feature (energy, acousticness, danceability,...)')
+        
+        parser.add_argument('--complete2',action="store_true",help='create a database without spotify feature (energy, acousticness, danceability,...)')
+
         self.args = parser.parse_args()
         # print(args.client_id)
         self.client_id = self.args.client_id
         self.client_secret = self.args.client_secret
         self.username = self.args.username
         self.complete = self.args.complete
+        
 
 
 if __name__ == '__main__':
