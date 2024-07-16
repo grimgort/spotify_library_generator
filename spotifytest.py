@@ -212,6 +212,9 @@ class SpotifyInstance:
 
         
         database_temporary = self.get_liked_track()
+        # logger.info('database liked: %s', database_temporary)
+        # with open("./database_liked.json", 'w', encoding='utf-8') as fichier:
+        #     json.dump(database_temporary, fichier, ensure_ascii=False, indent=4)
         track_list2=[]
         for key in database_temporary:
             traks2 = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
@@ -721,8 +724,12 @@ class SpotifyInstance:
         track_id=[]
         offset = 0
         for i in range(0, 50):
+            # with open("./database_liked.json", 'w', encoding='utf-8') as fichier:
+            #     json.dump(database, fichier, ensure_ascii=False, indent=4)
             trak = self.sp.current_user_saved_tracks(limit=self.number_max_request2, offset=offset)
             offset += self.number_max_request2
+            # with open("./database_liked2.json", 'w', encoding='utf-8') as fichier:
+            #     json.dump(trak, fichier, ensure_ascii=False, indent=4)
             # print(trak['items'])
             # track_id, trak_name = self.add_trakts_id_to_list(trak['items'])
             # list_track_id.append(track_id)
@@ -735,28 +742,32 @@ class SpotifyInstance:
                     track_id.append(key['track']['id'])
                     track_name.append(key['track']['name'])
                     # list_trak.append((key['track']['id'],key['track']['name'] ))
-            energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
-            track_id)
+            if trak['next'] == None:
+                break
 
-            if len(track_id) != 0 and len(energy) != 0:
-                for i in range(0, len(track_id) - 1):
-                    # print("i=",i)
-                    # print(key['name'])
-                    # print(track_id[i], track_name[i])
-                    # print(energy[i])
-                    try:
-                        database.append([
-                            "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
-                            energy[i], acousticness[i], danceability[i],
-                            instrumentalness[i], liveness[i], loudness[i],
-                            speechiness[i], valence[i], tempo[i], "liked"
-                        ])
-                    except Exception:
-                        database.append([
-                            "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
-                            None, None, None, None, None, None, None, None, None, "liked"
-                        ])
-                        continue
+        energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
+        track_id)
+
+        if len(track_id) != 0 and len(energy) != 0:
+            for i in range(0, len(track_id) - 1):
+                # print("i=",i)
+                # print(key['name'])
+                # print(track_id[i], track_name[i])
+                # print(energy[i])
+                try:
+                    database.append([
+                        "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
+                        energy[i], acousticness[i], danceability[i],
+                        instrumentalness[i], liveness[i], loudness[i],
+                        speechiness[i], valence[i], tempo[i], "liked"
+                    ])
+                except Exception:
+                    database.append([
+                        "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
+                        None, None, None, None, None, None, None, None, None, "liked"
+                    ])
+                    continue
+
         return database
 
     def add_argument(self):
