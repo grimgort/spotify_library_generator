@@ -236,27 +236,25 @@ class SpotifyInstance:
             
 
         artiste_list = self.get_artist_followed()
+        # with open("./database_liked.json", 'w', encoding='utf-8') as fichier:
+        #     json.dump(artiste_list, fichier, ensure_ascii=False, indent=4)
         for key, genre, name in artiste_list:
-            album, album_name = (self.show_artist_albums(key))
-            for key in self.track_list:
-                # print(key)
-                for album_exist in key.album:
-                    # print(genre)
-                    for key in album:
-                        if not re.search(album_exist, key):
+            album, album_name_liste = (self.show_artist_albums(key))
+            # les 3 boucles dégueulasse permete de vérifier si on a déja l'album dans la self.track_list pour éviter les doublon
+            album_exist = False
+            for track in self.track_list:
+                    for album_name in album:
+                        if re.search(album_name['name'], track.album):
+                            album_exist = True
+            if not album_exist:    
+                for album_objet in album:        
                             self.calcul_time_token()
-                            trakts = (self.show_album_tracks(key))
+                            trakts = (self.show_album_tracks(album_objet))
                             track_id, track_name = self.add_trakts_id_to_list(trakts)
-                            print(track_id)
                             energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
                                 track_id)
-                            # print("energy",energy)
                             if len(track_id) != 0 and len(energy) != 0:
                                 for i in range(0, len(track_id) - 1):
-                                    # print("i=",i)
-                                    # print(key['name'])
-                                    # print(track_id[i], track_name[i])
-                                    # print(energy[i])
                                     try:
                                         database.append([
                                             name, genre, key['name'], track_id[i],
@@ -272,7 +270,7 @@ class SpotifyInstance:
                                             None, None, None, None, album_name
                                         ])
                                         continue
-                                self.save_tracks_database_to_file(database, self.final_database)
+        # self.save_tracks_database_to_file(database, self.final_database)
         return database     
              
 
@@ -320,11 +318,18 @@ class SpotifyInstance:
     def show_artist_albums(self, artist):
         albums = []
         albums_name = []
-        results = self.sp.artist_albums(artist['id'], album_type='album')
-        albums.extend(results['items'])
-        while results['next']:
-            results = self.sp.next(results)
-            albums.extend(results['items'])
+        results = self.sp.artist_albums(artist['id'], album_type='album', country='FR',limit=40)
+        for key in  results['items']:
+            if key['album_type']== 'album':
+                albums.append(key)
+
+        #cette fonction bug. elle renvoit tout les albums_type. les list sont hyper longue mais les premier résultat sont toujorus les albulms
+        # while results['next']:
+        #     results = self.sp.next(results)
+        #     albums.extend(results['items'])
+        # with open("./database_liked.json", 'w', encoding='utf-8') as fichier:
+        #        json.dump(albums, fichier, ensure_ascii=False, indent=4)
+
         logger.info('Total albums: %s', len(albums))
         unique = set()  # skip duplicate albums
         album_output = []
