@@ -187,18 +187,11 @@ class SpotifyInstance:
                 artist_followed = self.sp.current_user_followed_artists(
                     limit=self.number_max_request2, after=artist_id)
             for key in artist_followed['artists']['items']:
-                # print(key['genres'])
-                # if key['genres'] == 'classical':
-                # self.classic_album.extend(key['genres'])
-                # print(self.classic_album)
-                # else:
+                artist_list.append([key, key['genres'], key['name']])
                 artist_id = key['id']
-                # print("fred = " + artist_id)
-                # print(key['name'])
-                artist = self.get_artist(key['name'])
-                if (artist != None):
-                    artist_list.append([artist, key['genres'], key['name']])
-                    print(key['name'])
+            if artist_followed['artists']['next'] == None:
+                break
+
 
         return artist_list
     def complete_database(self,database):
