@@ -23,13 +23,14 @@ logging.basicConfig(filename='spotilog.txt', level='INFO')
 
 
 class Traks:
-    def __init__(self, id_sp, artiste, album, genres, energy, acousticness,
+    def __init__(self, id_sp, artiste, album, genres,track_name, energy, acousticness,
                  danceability, instrumentalness, liveness, loudness,
-                 speechiness, valence, tempo):
+                 speechiness, valence, tempo ):
         self.id_sp = id_sp
         self.artiste = artiste
         self.album = album
         self.genres = genres
+        self.track_name = track_name
         self.energy = energy
         self.acousticness = acousticness
         self.danceability = danceability
@@ -39,6 +40,7 @@ class Traks:
         self.speechiness = speechiness
         self.valence = valence
         self.tempo = tempo
+        
 
 
 class SpotifyInstance:
@@ -66,7 +68,7 @@ class SpotifyInstance:
 
         self.playlist_id = ""
         self.maximum_song_by_playlist = 500
-        self.maximum_playlist_to_create = 5
+        self.maximum_playlist_to_create = 10
         self.number_max_request1 = 99
         self.number_max_request2 = 49
         # self.number_max_request2 = 5
@@ -198,9 +200,9 @@ class SpotifyInstance:
         track_id = []
         self.track_list = []
         for key in database:
-            traks = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
-                        key[7], key[8], key[9], key[10], key[11], key[12],
-                        key[13])
+            traks = Traks(key[0], key[1], key[2], key[3], key[4], key[5],
+                        key[6], key[7], key[8], key[9], key[10], key[11],
+                        key[12],key[13])
             self.track_list.append(traks)
 
         
@@ -210,9 +212,9 @@ class SpotifyInstance:
         #     json.dump(database_temporary, fichier, ensure_ascii=False, indent=4)
         track_list2=[]
         for key in database_temporary:
-            traks2 = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
-                        key[7], key[8], key[9], key[10], key[11], key[12],
-                        key[13])
+            traks2 = Traks(key[0], key[1], key[2], key[3], key[4], key[5],
+                        key[6], key[7], key[8], key[9], key[10], key[11],
+                        key[12],key[13])
             track_list2.append(traks2)
         compteur = 0
         for key in track_list2:
@@ -238,7 +240,10 @@ class SpotifyInstance:
         artiste_list = self.get_artist_followed()
         # with open("./database_liked.json", 'w', encoding='utf-8') as fichier:
         #     json.dump(artiste_list, fichier, ensure_ascii=False, indent=4)
+        artiste_number = 0
         for key, genre, name in artiste_list:
+            artiste_number +=1
+            print(artiste_number, name )
             album, album_name_liste = (self.show_artist_albums(key))
             # les 3 boucles dégueulasse permete de vérifier si on a déja l'album dans la self.track_list pour éviter les doublon
             album_exist = False
@@ -247,7 +252,8 @@ class SpotifyInstance:
                         if re.search(album_name['name'], track.album):
                             album_exist = True
             if not album_exist:    
-                for album_objet in album:        
+                for album_objet in album:   
+                            print(album_objet['name'], name)     
                             self.calcul_time_token()
                             trakts = (self.show_album_tracks(album_objet))
                             track_id, track_name = self.add_trakts_id_to_list(trakts)
@@ -257,17 +263,15 @@ class SpotifyInstance:
                                 for i in range(0, len(track_id) - 1):
                                     try:
                                         database.append([
-                                            name, genre, key['name'], track_id[i],
-                                            track_name[i], energy[i], acousticness[i],
+                                            track_id[i], name,  album_objet['name'], genre,                                         track_name[i], energy[i], acousticness[i],
                                             danceability[i], instrumentalness[i],
                                             liveness[i], loudness[i], speechiness[i],
-                                            valence[i], tempo[i], album_name
+                                            valence[i], tempo[i]
                                         ])
                                     except Exception:
                                         database.append([
-                                            name, genre, key['name'], track_id[i],
-                                            track_name[i], None, None, None, None, None,
-                                            None, None, None, None, album_name
+                                            track_id[i], name,  album_objet['name'], genre,                                         track_name[i], None, None, None, None, None,
+                                            None, None, None, None
                                         ])
                                         continue
         # self.save_tracks_database_to_file(database, self.final_database)
@@ -300,16 +304,14 @@ class SpotifyInstance:
                         # print(energy[i])
                         try:
                             database.append([
-                                name, genre, key['name'], track_id[i],
-                                track_name[i], energy[i], acousticness[i],
-                                danceability[i], instrumentalness[i],
-                                liveness[i], loudness[i], speechiness[i],
-                                valence[i], tempo[i], album_name
-                            ])
+                                            track_id[i], name,  album_name, genre,                                         track_name[i], energy[i], acousticness[i],
+                                            danceability[i], instrumentalness[i],
+                                            liveness[i], loudness[i], speechiness[i],
+                                            valence[i], tempo[i]
+                                        ])
                         except Exception:
                             database.append([
-                                name, genre, key['name'], track_id[i],
-                                track_name[i], None, None, None, None, None,
+                                track_id[i], name,  album_name, genre,track_name[i], None, None, None, None, None,
                                 None, None, None, None, album_name
                             ])
                             continue
@@ -543,11 +545,11 @@ class SpotifyInstance:
             self.playlist_from_feature("tempo", False, 100)
         
     def create_or_read_database(self):
-        if self.complete == True:
-            logger.info("create database")
-            database = self.create_database()
-            self.save_tracks_database_to_file(database, self.final_database)
-        elif self.args.complete2 == True:
+        # if self.complete == True:
+        #     logger.info("create database")
+        #     database = self.create_database()
+        #     self.save_tracks_database_to_file(database, self.final_database)
+        if self.args.complete2 == True:
             logger.info("create database")
             database = self.read_database(self.final_database)
 
@@ -561,12 +563,12 @@ class SpotifyInstance:
 
         self.track_list = []
         for key in database:
-            traks = Traks(key[3], key[0], key[2], key[1], key[5], key[6],
-                          key[7], key[8], key[9], key[10], key[11], key[12],
-                          key[13])
+            traks = Traks(key[0], key[1], key[2], key[3], key[4], key[5],
+                        key[6], key[7], key[8], key[9], key[10], key[11],
+                        key[12],key[13])
             self.track_list.append(traks)
 
-        if self.complete == True:
+        if self.args.complete2 == True:
             list_genres = self.print_genres()
             self.save_tracks_database_to_file(list_genres,
                                               self.genres_database)
@@ -611,10 +613,10 @@ class SpotifyInstance:
                     raise
         print(path_to_save)
         with open(path_to_save, "w") as outfile:
-            json.dump(traks, outfile)
+            json.dump(traks, outfile, indent=4)
 
     def read_database(self, file_to_read):
-        if not os.path.exists(os.path.dirname(file_to_read)):
+        if not os.path.exists(file_to_read):
             return []
             # raise Exception(
             #     "database don t exist.launch complete process first")
@@ -754,15 +756,15 @@ class SpotifyInstance:
                 # print(energy[i])
                 try:
                     database.append([
-                        "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
+                        track_id[i],"titre liked", "titre liked", "titre liked",  track_name[i],
                         energy[i], acousticness[i], danceability[i],
                         instrumentalness[i], liveness[i], loudness[i],
-                        speechiness[i], valence[i], tempo[i], "liked"
+                        speechiness[i], valence[i], tempo[i]
                     ])
                 except Exception:
                     database.append([
-                        "titre liked", "titre liked", "titre liked", track_id[i], track_name[i],
-                        None, None, None, None, None, None, None, None, None, "liked"
+                        track_id[i],"titre liked", "titre liked", "titre liked",  track_name[i],
+                        None, None, None, None, None, None, None, None, None
                     ])
                     continue
 
