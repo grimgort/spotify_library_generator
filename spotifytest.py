@@ -206,6 +206,8 @@ class SpotifyInstance:
     def complete_database(self,database):
         track_id = []
         self.track_list = []
+        album_name_list =[]
+        track_name=[]
         for key in database:
             traks = Traks(key[0], key[1], key[2], key[3], key[4], key[5],
                         key[6], key[7], key[8], key[9], key[10], key[11],
@@ -263,66 +265,71 @@ class SpotifyInstance:
                             print(album_objet['name'], name)     
                             self.calcul_time_token()
                             trakts = (self.show_album_tracks(album_objet))
-                            track_id, track_name = self.add_trakts_id_to_list(trakts)
-                            energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
-                                track_id)
-                            if len(track_id) != 0 and len(energy) != 0:
-                                for i in range(0, len(track_id) - 1):
-                                    try:
-                                        database.append([
-                                            track_id[i], name,  album_objet['name'], genre,                                         track_name[i], energy[i], acousticness[i],
-                                            danceability[i], instrumentalness[i],
-                                            liveness[i], loudness[i], speechiness[i],
-                                            valence[i], tempo[i]
-                                        ])
-                                    except Exception:
-                                        database.append([
-                                            track_id[i], name,  album_objet['name'], genre,                                         track_name[i], None, None, None, None, None,
-                                            None, None, None, None
-                                        ])
-                                        continue
+                            track_id_of_album, track_name_of_album = self.add_trakts_id_to_list(trakts)
+                            track_id.extend(track_id_of_album)
+                            track_name.extend(track_name_of_album)
+                            for track in track_id_of_album:
+                                album_name_list.append(album_objet['name']) 
+            if len(track_id)!= 0:
+                energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
+                    track_id)
+            if len(track_id) != 0 and len(energy) != 0:
+                for i in range(0, len(track_id) - 1):
+                    try:
+                        database.append([
+                            track_id[i], name,  album_name_list[i], genre,                                         track_name[i], energy[i], acousticness[i],
+                            danceability[i], instrumentalness[i],
+                            liveness[i], loudness[i], speechiness[i],
+                            valence[i], tempo[i]
+                        ])
+                    except Exception:
+                        database.append([
+                            track_id[i], name,  album_name_list[i], genre,                                         track_name[i], None, None, None, None, None,
+                            None, None, None, None
+                        ])
+                        continue
         # self.save_tracks_database_to_file(database, self.final_database)
         return database     
              
 
 
-    def create_database(self):
-        database = []
-        track_id = []
+    # def create_database(self):
+    #     database = []
+    #     track_id = []
 
-        database = self.get_liked_track()
+    #     database = self.get_liked_track()
 
-        artiste_list = self.get_artist_followed()
-        for key, genre, name in artiste_list:
-            album, album_name = (self.show_artist_albums(key))
-            for key in album:
-                self.calcul_time_token()
-                trakts = (self.show_album_tracks(key))
-                track_id, track_name = self.add_trakts_id_to_list(trakts)
-                print(track_id)
-                energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
-                    track_id)
-                # print("energy",energy)
-                if len(track_id) != 0 and len(energy) != 0:
-                    for i in range(0, len(track_id) - 1):
-                        # print("i=",i)
-                        # print(key['name'])
-                        # print(track_id[i], track_name[i])
-                        # print(energy[i])
-                        try:
-                            database.append([
-                                            track_id[i], name,  album_name, genre,                                         track_name[i], energy[i], acousticness[i],
-                                            danceability[i], instrumentalness[i],
-                                            liveness[i], loudness[i], speechiness[i],
-                                            valence[i], tempo[i]
-                                        ])
-                        except Exception:
-                            database.append([
-                                track_id[i], name,  album_name, genre,track_name[i], None, None, None, None, None,
-                                None, None, None, None, album_name
-                            ])
-                            continue
-        return database
+    #     artiste_list = self.get_artist_followed()
+    #     for key, genre, name in artiste_list:
+    #         album, album_name = (self.show_artist_albums(key))
+    #         for key in album:
+    #             self.calcul_time_token()
+    #             trakts = (self.show_album_tracks(key))
+    #             track_id, track_name = self.add_trakts_id_to_list(trakts)
+    #             print(track_id)
+    #             energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
+    #                 track_id)
+    #             # print("energy",energy)
+    #             if len(track_id) != 0 and len(energy) != 0:
+    #                 for i in range(0, len(track_id) - 1):
+    #                     # print("i=",i)
+    #                     # print(key['name'])
+    #                     # print(track_id[i], track_name[i])
+    #                     # print(energy[i])
+    #                     try:
+    #                         database.append([
+    #                                         track_id[i], name,  album_name, genre,                                         track_name[i], energy[i], acousticness[i],
+    #                                         danceability[i], instrumentalness[i],
+    #                                         liveness[i], loudness[i], speechiness[i],
+    #                                         valence[i], tempo[i]
+    #                                     ])
+    #                     except Exception:
+    #                         database.append([
+    #                             track_id[i], name,  album_name, genre,track_name[i], None, None, None, None, None,
+    #                             None, None, None, None, album_name
+    #                         ])
+    #                         continue
+    #     return database
 
     def show_artist_albums(self, artist):
         albums = []
