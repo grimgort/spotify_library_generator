@@ -208,6 +208,8 @@ class SpotifyInstance:
         self.track_list = []
         album_name_list =[]
         track_name=[]
+        artiste_name_list =[]
+        genre_name_list =[]
         for key in database:
             traks = Traks(key[0], key[1], key[2], key[3], key[4], key[5],
                         key[6], key[7], key[8], key[9], key[10], key[11],
@@ -270,24 +272,26 @@ class SpotifyInstance:
                             track_name.extend(track_name_of_album)
                             for track in track_id_of_album:
                                 album_name_list.append(album_objet['name']) 
-            if len(track_id)!= 0:
-                energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
-                    track_id)
-            if len(track_id) != 0 and len(energy) != 0:
-                for i in range(0, len(track_id) - 1):
-                    try:
-                        database.append([
-                            track_id[i], name,  album_name_list[i], genre,                                         track_name[i], energy[i], acousticness[i],
-                            danceability[i], instrumentalness[i],
-                            liveness[i], loudness[i], speechiness[i],
-                            valence[i], tempo[i]
-                        ])
-                    except Exception:
-                        database.append([
-                            track_id[i], name,  album_name_list[i], genre,                                         track_name[i], None, None, None, None, None,
-                            None, None, None, None
-                        ])
-                        continue
+                                artiste_name_list.append(name)
+                                genre_name_list.append(genre)
+        if len(track_id)!= 0:
+            energy, acousticness, danceability, instrumentalness, liveness, loudness, speechiness, valence, tempo = self.audio_features_list(
+                track_id)
+        if len(track_id) != 0 and len(energy) != 0:
+            for i in range(0, len(track_id) - 1):
+                try:
+                    database.append([
+                        track_id[i], artiste_name_list[i],  album_name_list[i], genre_name_list[i],                                         track_name[i], energy[i], acousticness[i],
+                        danceability[i], instrumentalness[i],
+                        liveness[i], loudness[i], speechiness[i],
+                        valence[i], tempo[i]
+                    ])
+                except Exception:
+                    database.append([
+                        track_id[i], artiste_name_list[i],  album_name_list[i], genre_name_list[i],                                         track_name[i], None, None, None, None, None,
+                        None, None, None, None
+                    ])
+                    continue
         # self.save_tracks_database_to_file(database, self.final_database)
         return database     
              
