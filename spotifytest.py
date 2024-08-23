@@ -22,6 +22,9 @@ logger.setLevel(logging.DEBUG)
 logging.basicConfig(filename='spotilog.txt', level='INFO')
 
 
+def has_duplicates(input_list):
+    return len(input_list) != len(set(input_list))
+
 class Traks:
     def __init__(self, id_sp, artiste, album, genres,track_name, energy, acousticness,
                  danceability, instrumentalness, liveness, loudness,
@@ -80,6 +83,7 @@ class SpotifyInstance:
 
         self.final_database = "./spotipyDatabaseFred/database_final.json"
         self.genres_database = "./spotipyDatabaseFred/database_genres.json"
+        self.artiste_database="./spotipyDatabaseFred/database_artistes_followed.json"
 
         return
 
@@ -193,8 +197,11 @@ class SpotifyInstance:
                 artist_id = key['id']
             if artist_followed['artists']['next'] == None:
                 break
-
-
+        artiste_name_list =[]    
+        for key,genre,name in    artist_list:
+            artiste_name_list.append(name)
+        self.save_tracks_database_to_file(artiste_name_list,
+                                              self.artiste_database)
         return artist_list
     def complete_database(self,database):
         track_id = []
@@ -427,12 +434,18 @@ class SpotifyInstance:
         list_track = []
         for key in self.track_list:
             # print(key)
-            for genre in key.genres:
-                # print(genre)
-                if re.search(genres_name, genre):
-                    # print("fred",genre)
-                    list_track.append(key.id_sp)
-                    break
+            if isinstance(key.genres, list):  # Check if key.genres is a list
+                for genre in key.genres:
+                    # print(genre)
+                    if re.search(genres_name, genre):
+                        # print("fred",genre)
+                        list_track.append(key.id_sp)
+                        break
+            else:
+                if re.search(genres_name, key.genres):
+                        # print("fred",genre)
+                        list_track.append(key.id_sp)
+
         playlist_name = "genre pat : " + str(genres_name)
         # print(len(list_track),len(list_track))
         # print(playlist_name)
@@ -442,15 +455,17 @@ class SpotifyInstance:
         # print("processing playlist : ", genres_name)
         list_track = []
         for key in self.track_list:
-            # print(key)
-            for genre in key.genres:
-                # print(genre)
-                if genre in genres_name:
-                    # print("fred",genre)
-                    list_track.append(key.id_sp)
-                    break
+            if isinstance(key.genres, list):  # Check if key.genres is a list
+                for genre in key.genres:
+                    if genre == genres_name:
+                       list_track.append(key.id_sp)
+                       break
+            else:
+                 if key.genres == genres_name:
+                        list_track.append(key.id_sp)
+                        
         playlist_name = "Xgenre : " + str(genres_name)
-        # print(len(list_track),len(list_track))
+        print(playlist_name, len(list_track))
         # print(playlist_name)
         self.add_list_of_trackts(list_track, self.maximum_playlist_to_create, playlist_name)
 
@@ -475,7 +490,7 @@ class SpotifyInstance:
         # print(feature_dico)
         if feature_dico != {}:
             if min_max == True:
-                playlist_name = "feature rev : " + feature_name
+                playlist_name = "feature inverse : " + feature_name
                 feature_dico = sorted(feature_dico.items(),
                                       key=lambda kv: kv[1])
                 # print(feature_dico)
@@ -498,8 +513,8 @@ class SpotifyInstance:
                 else:
                     b = [x[0] for x in feature_dico]
         # b = [x[0] for x in feature_dico]
-            print("len(b)=", len(b))
-
+            # print("len(b)=", len(b))
+            # print(playlist_name, len(b))
             self.add_list_of_trackts(b, 1, playlist_name)
 
     def show_album_tracks(self, album):
@@ -597,11 +612,13 @@ class SpotifyInstance:
     def print_genres(self):
         list_genres = []
         for key in self.track_list:
-            for key2 in key.genres:
-                if key2 not in list_genres:
-                    # print(key2)
-                    list_genres.append(key2)
-                    # print(list_genres)
+            if isinstance(key.genres, list):  # Check if key.genres is a list
+                for key2 in key.genres:
+                    if key2 not in list_genres:
+                        list_genres.append(key2)
+            else:
+                 if key.genres not in list_genres:
+                        list_genres.append(key.genres)
         return list_genres
 
     def save_tracks_database_to_file(self, traks, path_to_save):
