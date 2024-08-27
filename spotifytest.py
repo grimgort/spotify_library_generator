@@ -646,7 +646,6 @@ class SpotifyInstance:
         return tracks
 
     def add_library_playlist(self):
-        self.big_playlist_from_database()
         if self.args.with_playlist_from_genre:
             self.playlist_from_genres_pattern("french")
             self.playlist_from_genres_pattern("classical")
@@ -674,6 +673,8 @@ class SpotifyInstance:
             self.playlist_from_feature("speechiness", False, None)
             self.playlist_from_feature("valence", False, 0.5)
             self.playlist_from_feature("tempo", False, 100)
+        
+        self.big_playlist_from_database()
 
     def create_or_read_database(self):
         # if self.complete == True:
