@@ -45,7 +45,7 @@ jobs:
         super_secret: ${{ secrets.KEY1}}
         super_secret2: ${{ secrets.CLIEN_SECRET}}
       run: |
-        python -u spotifytest.py --client_id super_secret --client_secret $super_secret2 --username grimgort --complete --database_without_feature
+        python -u spotifytest.py --client_id super_secret --client_secret $super_secret2 --username grimgort --complete2 
 
     # - name: Upload Log File as Artifact
     #   uses: actions/upload-artifact@v2
