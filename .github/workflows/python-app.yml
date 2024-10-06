@@ -47,8 +47,8 @@ jobs:
       run: |
         python -u spotifytest.py --client_id super_secret --client_secret $super_secret2 --username grimgort --complete --database_without_feature
 
-    - name: Upload Log File as Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: spotilog
-        path: spotilog.txt
+    # - name: Upload Log File as Artifact
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: spotilog
+    #     path: spotilog.txt
